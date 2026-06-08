@@ -13,7 +13,8 @@ set -e
 PROJECT_DIR="/Production/AstroVedansh/RI-replica"
 APP_NAME="ri-replica"
 PORT="8081"
-DOMAIN="yourdomain.com" # Replace with your actual domain when prompted
+# Configure both .com and .in domains as defaults
+DOMAIN="reidiusinfra.com www.reidiusinfra.com reidiusinfra.in www.reidiusinfra.in"
 
 # --- Color Definitions for logs ---
 RED='\033[0;31m'
@@ -96,23 +97,26 @@ if ! command -v nginx &> /dev/null; then
 fi
 
 # Ask if user wants to update Nginx configuration
-read -p "Do you want to configure/update Nginx reverse proxy for this app? (y/N): " configure_nginx
+read -p "Do you want to configure/update Nginx reverse proxy for these domains? (y/N): " configure_nginx
 
 if [[ "$configure_nginx" =~ ^[Yy]$ ]]; then
-    read -p "Enter your domain name (e.g. reidiusinfra.com): " USER_DOMAIN
-    if [ -n "$USER_DOMAIN" ]; then
-        DOMAIN=$USER_DOMAIN
+    read -p "Use pre-configured domains ($DOMAIN)? (Y/n): " use_default_domain
+    if [[ "$use_default_domain" =~ ^[Nn]$ ]]; then
+        read -p "Enter your custom domain list (space-separated): " CUSTOM_DOMAINS
+        if [ -n "$CUSTOM_DOMAINS" ]; then
+            DOMAIN=$CUSTOM_DOMAINS
+        fi
     fi
 
     NGINX_CONF="/etc/nginx/sites-available/$APP_NAME"
     NGINX_LINK="/etc/nginx/sites-enabled/$APP_NAME"
 
-    log_info "Creating Nginx configuration block for domain: $DOMAIN"
+    log_info "Creating Nginx configuration block for domains: $DOMAIN"
     
     cat << EOF > "$NGINX_CONF"
 server {
     listen 80;
-    server_name $DOMAIN www.$DOMAIN;
+    server_name $DOMAIN;
 
     # Allow custom ranges used by Framer CMS chunks
     proxy_set_header Range \$http_range;
@@ -142,19 +146,27 @@ EOF
 
     log_info "Restarting Nginx to apply reverse proxy..."
     systemctl restart nginx
-    log_success "Nginx successfully configured for http://$DOMAIN"
+    log_success "Nginx successfully configured!"
 else
     log_info "Skipping Nginx configuration."
 fi
 
 # --- Step 5: Certbot SSL Setup Reminder ---
 log_info "Checking SSL Certificate status..."
+
+# Build certbot command dynamically
+CERTBOT_ARGS=""
+for d in $DOMAIN; do
+    CERTBOT_ARGS="$CERTBOT_ARGS -d $d"
+done
+
 if command -v certbot &> /dev/null; then
-    log_success "Certbot is installed. To enable HTTPS, run: sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN"
+    log_success "Certbot is installed. To enable HTTPS, run:"
+    echo -e "${GREEN}sudo certbot --nginx$CERTBOT_ARGS${NC}"
 else
     log_warning "Certbot is not installed. To secure your site with HTTPS, run:"
     echo -e "${YELLOW}apt-get install -y certbot python3-certbot-nginx${NC}"
-    echo -e "${YELLOW}sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN${NC}"
+    echo -e "${YELLOW}sudo certbot --nginx$CERTBOT_ARGS${NC}"
 fi
 
 log_success "Deployment completed successfully! 🎉"
