@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 serve_mvc.py 8081 .)",
+      "Bash(echo \"Server PID: $!\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://framerusercontent.com/images/00DCTFO4Hay4gO9dOCV1iS0VZEU.png\")",
+      "Bash(python3 -c ' *)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "Bash(pkill -f \"serve_mvc.py\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8081/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8081/careers)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8081/careers.html)",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:8081__TRACKED_VAR__)"
+    ]
+  }
+}

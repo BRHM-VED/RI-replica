@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, follow">
+  <title>Thank You | Reidius Infra</title>
+  <link rel="icon" href="assets/images/BkdMtlZ4tfjjrJftDqa7HCXEmR4.png">
+  <style>
+    @font-face {
+      font-family: 'Archivo';
+      font-style: normal;
+      font-weight: 400 700;
+      font-display: swap;
+      src: url(assets/fonts/k3k8o8UDI-1M0wlSfdzyIEkpwTM29hr-8mTYIRyOSVz60_PG_HCBsydkD0_SVQ.woff2) format('woff2');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      font-family: 'Archivo', sans-serif;
+      background: linear-gradient(180deg, #f5f5f5 0%, rgba(197,197,197,0.6) 100%);
+      min-height: 100vh;
+      color: #1a1a1a;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+      padding: 10px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      font-size: 13px;
+      color: #444;
+      flex-wrap: wrap;
+    }
+    .topbar span { display: flex; align-items: center; gap: 6px; }
+
+    /* ── Navbar ── */
+    nav {
+      background: #fff;
+      box-shadow: 0 4px 48px rgba(0,0,0,0.08);
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 70px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: #1a1a1a;
+    }
+    .logo img { height: 28px; width: auto; }
+    .logo-text { font-size: 17px; font-weight: 700; letter-spacing: 0.5px; }
+    .logo-text span { color: #000; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none;
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: #000; }
+
+    .nav-cta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-outline {
+      padding: 8px 18px;
+      border: 1.5px solid #1a1a1a;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      color: #1a1a1a;
+      background: transparent;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-outline:hover { background: #1a1a1a; color: #fff; }
+    .btn-filled {
+      padding: 8px 20px;
+      background: #d0c412;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      color: #1a1a1a;
+      letter-spacing: 0.3px;
+      transition: opacity 0.2s;
+    }
+    .btn-filled:hover { opacity: 0.85; }
+
+    /* ── Thank You card ── */
+    .page-wrapper {
+      min-height: calc(100vh - 120px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.08);
+      padding: 64px 56px;
+      text-align: center;
+      max-width: 560px;
+      width: 100%;
+      animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .check-ring {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 2px solid #d0c412;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 28px;
+      background: rgba(208,196,18,0.08);
+    }
+    .check-ring svg {
+      width: 32px;
+      height: 32px;
+    }
+
+    .card h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 14px;
+      letter-spacing: -0.3px;
+    }
+
+    .card p {
+      font-size: 15px;
+      color: #666;
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .card-actions .btn-filled {
+      padding: 12px 28px;
+      font-size: 14px;
+      border-radius: 8px;
+    }
+    .card-actions .btn-outline {
+      padding: 12px 28px;
+      font-size: 14px;
+      border-radius: 8px;
+    }
+
+    /* ── Footer strip ── */
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 13px;
+      color: #888;
+      border-top: 1px solid #e8e8e8;
+      background: #fff;
+    }
+    footer a { color: #555; text-decoration: none; margin: 0 8px; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 20px; }
+      .nav-links, .topbar { display: none; }
+      .card { padding: 48px 28px; }
+      .card h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top info bar -->
+  <div class="topbar">
+    <span>✉ info@reidiusinfra.com</span>
+    <span>📞 +91 9057344344</span>
+    <span>🔧 Maintenance: +91 9057909990</span>
+  </div>
+
+  <!-- Navbar -->
+  <nav>
+    <a href="index.html" class="logo">
+      <img src="assets/images/BkdMtlZ4tfjjrJftDqa7HCXEmR4.png" alt="Reidius Infra">
+      <span class="logo-text">Reidius Infra</span>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="index.html">All Projects</a></li>
+      <li><a href="about.html">About Us</a></li>
+      <li><a href="careers.html">Careers</a></li>
+      <li><a href="contact.html">Contact</a></li>
+      <li><a href="blog.html">Learn</a></li>
+      <li><a href="calculator.html">Cost Calculator</a></li>
+    </ul>
+
+    <div class="nav-cta">
+      <a href="consult-form.html" class="btn-filled">CONSULT NOW</a>
+    </div>
+  </nav>
+
+  <!-- Thank You content -->
+  <div class="page-wrapper">
+    <div class="card">
+
+      <div class="check-ring">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#d0c412" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      </div>
+
+      <h1>Thank You!</h1>
+      <p>Thank you for filling the form. We've received your request and our engineers will get in touch with you shortly.</p>
+
+      <div class="card-actions">
+        <a href="index.html" class="btn-filled">GO TO HOME</a>
+        <a href="architecture.html" class="btn-outline">EXPLORE PROJECTS</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer strip -->
+  <footer>
+    <p>© 2026 Reidius Infra Pvt. Ltd. All rights reserved.
+      <a href="privacy-policy.html">Privacy Policy</a>
+      <a href="terms-and-conditions.html">Terms &amp; Conditions</a>
+    </p>
+  </footer>
+
+</body>
+</html>

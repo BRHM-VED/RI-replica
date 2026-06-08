@@ -1,0 +1,160 @@
+#!/bin/bash
+
+# ==============================================================================
+# 🚀 Reidius Infra VPS Deployment Script
+# Description: Automates git pull, PM2 python server management, and Nginx reverse proxy
+# Usage on VPS: chmod +x deploy.sh && ./deploy.sh
+# ==============================================================================
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+# --- Configuration ---
+PROJECT_DIR="/Production/AstroVedansh/RI-replica"
+APP_NAME="ri-replica"
+PORT="8081"
+DOMAIN="yourdomain.com" # Replace with your actual domain when prompted
+
+# --- Color Definitions for logs ---
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0;m' # No Color
+
+log_info() {
+    echo -e "${BLUE}[INFO] $1${NC}"
+}
+
+log_success() {
+    echo -e "${GREEN}[SUCCESS] $1${NC}"
+}
+
+log_warning() {
+    echo -e "${YELLOW}[WARNING] $1${NC}"
+}
+
+log_error() {
+    echo -e "${RED}[ERROR] $1${NC}"
+}
+
+# --- Step 1: Verification and Setup ---
+log_info "Starting deployment sequence..."
+
+if [ "$EUID" -ne 0 ]; then
+    log_warning "This script is running without root privileges. Nginx configurations may fail if you are not root."
+fi
+
+# Ensure project directory exists
+if [ ! -d "$PROJECT_DIR" ]; then
+    log_info "Creating project directory: $PROJECT_DIR"
+    mkdir -p "$PROJECT_DIR"
+fi
+
+cd "$PROJECT_DIR"
+
+# Check if git is initialized
+if [ ! -d ".git" ]; then
+    log_error "This directory is not a git repository. Please clone it first following Phase 1."
+    exit 1
+fi
+
+# --- Step 2: Fetch and Pull Latest Changes ---
+log_info "Fetching latest updates from GitHub..."
+git fetch origin main
+git reset --hard origin/main
+log_success "Repository successfully updated with latest changes."
+
+# --- Step 3: PM2 Continuous Running Setup ---
+log_info "Configuring PM2 server instance..."
+
+# Check if PM2 is installed
+if ! command -v pm2 &> /dev/null; then
+    log_warning "PM2 is not installed. Installing PM2 globally..."
+    npm install -g pm2
+fi
+
+# Check if application is already running in PM2
+if pm2 list | grep -q "$APP_NAME"; then
+    log_info "Application is already running. Restarting PM2 process..."
+    PORT=$PORT pm2 restart "$APP_NAME"
+else
+    log_info "Launching new application process with PM2..."
+    PORT=$PORT pm2 start serve_mvc.py --name "$APP_NAME" --interpreter python3
+fi
+
+pm2 save
+log_success "PM2 configuration completed. App is running in the background."
+
+# --- Step 4: Nginx Reverse Proxy Setup ---
+log_info "Configuring Nginx reverse proxy..."
+
+if ! command -v nginx &> /dev/null; then
+    log_warning "Nginx is not installed. Installing Nginx..."
+    apt-get update
+    apt-get install -y nginx
+fi
+
+# Ask if user wants to update Nginx configuration
+read -p "Do you want to configure/update Nginx reverse proxy for this app? (y/N): " configure_nginx
+
+if [[ "$configure_nginx" =~ ^[Yy]$ ]]; then
+    read -p "Enter your domain name (e.g. reidiusinfra.com): " USER_DOMAIN
+    if [ -n "$USER_DOMAIN" ]; then
+        DOMAIN=$USER_DOMAIN
+    fi
+
+    NGINX_CONF="/etc/nginx/sites-available/$APP_NAME"
+    NGINX_LINK="/etc/nginx/sites-enabled/$APP_NAME"
+
+    log_info "Creating Nginx configuration block for domain: $DOMAIN"
+    
+    cat << EOF > "$NGINX_CONF"
+server {
+    listen 80;
+    server_name $DOMAIN www.$DOMAIN;
+
+    # Allow custom ranges used by Framer CMS chunks
+    proxy_set_header Range \$http_range;
+    proxy_set_header If-Range \$http_if_range;
+
+    location / {
+        proxy_pass http://127.0.0.1:$PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+EOF
+
+    # Enable the site configuration
+    if [ ! -L "$NGINX_LINK" ]; then
+        ln -s "$NGINX_CONF" "$NGINX_LINK"
+    fi
+
+    log_info "Testing Nginx syntax..."
+    nginx -t
+
+    log_info "Restarting Nginx to apply reverse proxy..."
+    systemctl restart nginx
+    log_success "Nginx successfully configured for http://$DOMAIN"
+else
+    log_info "Skipping Nginx configuration."
+fi
+
+# --- Step 5: Certbot SSL Setup Reminder ---
+log_info "Checking SSL Certificate status..."
+if command -v certbot &> /dev/null; then
+    log_success "Certbot is installed. To enable HTTPS, run: sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN"
+else
+    log_warning "Certbot is not installed. To secure your site with HTTPS, run:"
+    echo -e "${YELLOW}apt-get install -y certbot python3-certbot-nginx${NC}"
+    echo -e "${YELLOW}sudo certbot --nginx -d $DOMAIN -d www.$DOMAIN${NC}"
+fi
+
+log_success "Deployment completed successfully! 🎉"
