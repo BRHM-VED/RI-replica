@@ -10,7 +10,8 @@
 set -e
 
 # --- Configuration ---
-PROJECT_DIR="/Production/AstroVedansh/RI-replica"
+# Dynamically detect the folder the script is running in (prevents hardcoded path errors)
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="ri-replica"
 PORT="8081"
 # Configure both .com and .in domains as defaults
@@ -41,15 +42,10 @@ log_error() {
 
 # --- Step 1: Verification and Setup ---
 log_info "Starting deployment sequence..."
+log_info "Project Directory detected as: $PROJECT_DIR"
 
 if [ "$EUID" -ne 0 ]; then
     log_warning "This script is running without root privileges. Nginx configurations may fail if you are not root."
-fi
-
-# Ensure project directory exists
-if [ ! -d "$PROJECT_DIR" ]; then
-    log_info "Creating project directory: $PROJECT_DIR"
-    mkdir -p "$PROJECT_DIR"
 fi
 
 cd "$PROJECT_DIR"
