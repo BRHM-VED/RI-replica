@@ -1,14 +1,8 @@
-# Large videos that exceed GitHub's 100MB file limit
-assets/framer_cdn/www.dropbox.com/
+# These assets are hosted on Firebase Storage
+# gs://ri-website-c476b.firebasestorage.app
+assets/images/
+assets/videos/
 
-# macOS
+# OS files
 .DS_Store
-**/.DS_Store
-
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-
-# Temp files
-*.tmp.mp4
+*.DS_Store
