@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: ri-replica
-    runtime: python
-    startCommand: python3 serve_mvc.py $PORT .
-    envVars:
-      - key: PORT
-        value: 10000
