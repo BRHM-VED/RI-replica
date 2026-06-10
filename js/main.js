@@ -162,13 +162,13 @@ function initTestimonials() {
 function initDownloadPortfolio() {
   // Use the renamed, human-readable PDF path directly.
   // Hardcoded so it works regardless of what Framer's hydration does to the DOM.
-  const pdfUrl = 'assets/RI-Portfolio.pdf';
+  const pdfUrl = 'assets/ReidiusInfra_Portfoliio.pdf';
 
   function triggerDownload() {
     const a = document.createElement('a');
     a.href = pdfUrl;
     // No target="_blank" — browsers ignore `download` when target is _blank
-    a.download = 'RI-Portfolio.pdf';
+    a.download = 'ReidiusInfra_Portfoliio.pdf';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
