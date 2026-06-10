@@ -205,8 +205,32 @@ function initDownloadPortfolio() {
 // Global lazy-loader for dynamically injected image tags
 function initLazyLoading() {
   const setLazy = (img) => {
-    if (img && !img.hasAttribute('loading')) {
-      img.setAttribute('loading', 'lazy');
+    if (!img) return;
+
+    // Determine if the image is above-the-fold/primary
+    const isAboveFold = () => {
+      // 1. Check if inside header, hero section, or navigation
+      if (img.closest('header') || img.closest('.hero') || img.closest('[data-framer-name*="Hero" i]') || img.closest('[data-framer-name*="Navbar" i]')) {
+        return true;
+      }
+      
+      // 2. Check if it's one of the first 3 images in document order
+      const allImgs = Array.from(document.querySelectorAll('img'));
+      const index = allImgs.indexOf(img);
+      if (index >= 0 && index < 3) {
+        return true;
+      }
+      
+      return false;
+    };
+
+    if (isAboveFold()) {
+      img.setAttribute('loading', 'eager');
+      img.setAttribute('fetchpriority', 'high');
+    } else {
+      if (!img.hasAttribute('loading')) {
+        img.setAttribute('loading', 'lazy');
+      }
     }
   };
 
@@ -232,15 +256,19 @@ function initLazyLoading() {
 function initBgLazyLoading() {
   const lazyBgs = document.querySelectorAll('.lazy-bg, [data-bg]');
   
+  const loadBg = (el) => {
+    const bgUrl = el.getAttribute('data-bg');
+    if (bgUrl) {
+      el.style.backgroundImage = `url('${bgUrl}')`;
+    }
+    el.classList.add('bg-loaded');
+  };
+
   const bgObserver = new IntersectionObserver((entries, observer) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         const el = entry.target;
-        const bgUrl = el.getAttribute('data-bg');
-        if (bgUrl) {
-          el.style.backgroundImage = `url('${bgUrl}')`;
-        }
-        el.classList.add('bg-loaded');
+        loadBg(el);
         observer.unobserve(el);
       }
     });
@@ -250,8 +278,18 @@ function initBgLazyLoading() {
     threshold: 0.01
   });
 
+  // Check if background element is above the fold
+  const checkAndObserve = (el) => {
+    const isAboveFold = el.closest('header') || el.closest('[data-framer-name*="Hero" i]') || el.closest('[data-framer-name*="Navbar" i]');
+    if (isAboveFold) {
+      loadBg(el);
+    } else {
+      bgObserver.observe(el);
+    }
+  };
+
   // Watch for existing elements
-  lazyBgs.forEach(el => bgObserver.observe(el));
+  lazyBgs.forEach(checkAndObserve);
 
   // Watch for any dynamically injected background elements
   const observer = new MutationObserver((mutations) => {
@@ -259,9 +297,9 @@ function initBgLazyLoading() {
       for (const node of mutation.addedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) {
           if (node.classList.contains('lazy-bg') || node.hasAttribute('data-bg')) {
-            bgObserver.observe(node);
+            checkAndObserve(node);
           }
-          node.querySelectorAll('.lazy-bg, [data-bg]').forEach(el => bgObserver.observe(el));
+          node.querySelectorAll('.lazy-bg, [data-bg]').forEach(checkAndObserve);
         }
       }
     }
