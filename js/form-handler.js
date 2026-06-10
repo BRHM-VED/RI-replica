@@ -56,27 +56,55 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Send to WebLeads API if base URL is resolved
+        // Send to API if base URL is resolved
         if (apiBaseUrl) {
             try {
-                const payload = {
-                    name: form.querySelector('[name*="name" i], [placeholder*="name" i], #name, [data-framer-name*="name" i]')?.value?.trim() || "",
-                    phoneNumber: form.querySelector('[name*="phone" i], [name*="contact" i], [placeholder*="phone" i], [placeholder*="contact" i], #phone, [data-framer-name*="phone" i]')?.value?.trim() || "",
-                    email: form.querySelector('[name*="email" i], [placeholder*="email" i], #email, [data-framer-name*="email" i]')?.value?.trim() || "",
-                    message: form.querySelector('[name*="message" i], [placeholder*="message" i], #message, [name*="enquiry" i], [placeholder*="enquiry" i], [data-framer-name*="message" i]')?.value?.trim() || ""
-                };
-                console.log("[RI] Hitting WebLeads API:", payload);
+                const isCareers = window.location.pathname.includes("careers");
+                const getValue = (selector) => form.querySelector(selector)?.value?.trim() || "";
+                
+                const apiEndpoint = `${apiBaseUrl.replace(/\/$/, "")}/api/${isCareers ? "CareersLeads" : "RI_WebLeads"}`;
+                
+                let payload = {};
+                if (isCareers) {
+                    const rawPhone = getValue('[name*="phone" i], [name*="mobile" i], [name*="contact" i], [placeholder*="phone" i], [placeholder*="mobile" i], #phone');
+                    const digits = rawPhone.replace(/\D/g, "");
+                    const phoneNumber = (digits.length === 12 && digits.startsWith("91")) ? digits.substring(2) : (digits.length > 10 ? digits.slice(-10) : digits);
 
-                await fetch(`${apiBaseUrl.replace(/\/$/, "")}/api/RI_WebLeads`, {
+                    payload = {
+                        name: getValue('[name*="name" i], [placeholder*="name" i], #name'),
+                        phoneNumber: phoneNumber,
+                        email: getValue('[name*="email" i], [placeholder*="email" i], #email'),
+                        location: getValue('[name*="location" i], [placeholder*="location" i], #location'),
+                        linkedIn: getValue('[name*="linkedin" i], [placeholder*="linkedin" i], #linkedin'),
+                        role: getValue('[name*="role" i], [placeholder*="role" i], #role, [name*="position" i]'),
+                        resumeLink: getValue('[name*="resume" i], [placeholder*="resume" i], #resume, [name*="cv" i]'),
+                        yearsOfExperience: getValue('[name*="experience" i], [placeholder*="experience" i], [name*="exp" i]'),
+                        currentEmployer: getValue('[name*="employer" i], [placeholder*="employer" i], [name*="company" i], [placeholder*="company" i]'),
+                        expectedSalary: getValue('[name*="salary" i], [placeholder*="salary" i], [name*="ctc" i], [placeholder*="ctc" i]'),
+                        noticePeriod: getValue('[name*="notice" i], [placeholder*="notice" i]'),
+                        readyToRelocate: getValue('[name*="relocate" i], [placeholder*="relocate" i]')
+                    };
+                } else {
+                    payload = {
+                        name: getValue('[name*="name" i], [placeholder*="name" i], #name'),
+                        phoneNumber: getValue('[name*="phone" i], [name*="contact" i], [placeholder*="phone" i], [placeholder*="contact" i], #phone'),
+                        email: getValue('[name*="email" i], [placeholder*="email" i], #email'),
+                        message: getValue('[name*="message" i], [placeholder*="message" i], #message, [name*="enquiry" i], [placeholder*="enquiry" i]')
+                    };
+                }
+
+                console.log("[RI] Hitting API:", apiEndpoint, payload);
+
+                await fetch(apiEndpoint, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
             } catch (err) {
-                console.error("[RI] WebLeads API failed:", err.message);
+                console.error("[RI] API call failed:", err.message);
             }
         } else {
-            console.error("[RI] WebLeads API not called: API_BASE_URL not loaded from .env");
+            console.error("[RI] API not called: API_BASE_URL not loaded from .env");
         }
 
         // Reset submit button state
@@ -308,6 +336,8 @@ function closeThankYouModal() {
         history.pushState(null, "", window.location.pathname + window.location.search);
     }
 }
+
+
 
 
 

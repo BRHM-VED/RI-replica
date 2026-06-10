@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initCursorGlow();
   initTestimonials();
   initDownloadPortfolio();
+  initLazyLoading();
 });
 
 // Navbar active states & responsive drawer
@@ -198,4 +199,30 @@ function initDownloadPortfolio() {
   observer.observe(document.body, { childList: true, subtree: true });
   // Stop observing after 10s (hydration is always done by then)
   setTimeout(() => observer.disconnect(), 10000);
+}
+
+// Global lazy-loader for dynamically injected image tags
+function initLazyLoading() {
+  const setLazy = (img) => {
+    if (img && !img.hasAttribute('loading')) {
+      img.setAttribute('loading', 'lazy');
+    }
+  };
+
+  // Watch for any images added dynamically by React/Framer
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node.tagName === 'IMG') {
+          setLazy(node);
+        } else if (node.querySelectorAll) {
+          node.querySelectorAll('img').forEach(setLazy);
+        }
+      }
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Apply lazy loading to any images currently on the page
+  document.querySelectorAll('img').forEach(setLazy);
 }
