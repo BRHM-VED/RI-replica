@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTestimonials();
   initDownloadPortfolio();
   initLazyLoading();
+  initBgLazyLoading();
 });
 
 // Navbar active states & responsive drawer
@@ -225,4 +226,45 @@ function initLazyLoading() {
 
   // Apply lazy loading to any images currently on the page
   document.querySelectorAll('img').forEach(setLazy);
+}
+
+// Global lightweight CSS background lazy loader
+function initBgLazyLoading() {
+  const lazyBgs = document.querySelectorAll('.lazy-bg, [data-bg]');
+  
+  const bgObserver = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const el = entry.target;
+        const bgUrl = el.getAttribute('data-bg');
+        if (bgUrl) {
+          el.style.backgroundImage = `url('${bgUrl}')`;
+        }
+        el.classList.add('bg-loaded');
+        observer.unobserve(el);
+      }
+    });
+  }, {
+    root: null,
+    rootMargin: '100px', // Pre-load backgrounds 100px before they enter viewport
+    threshold: 0.01
+  });
+
+  // Watch for existing elements
+  lazyBgs.forEach(el => bgObserver.observe(el));
+
+  // Watch for any dynamically injected background elements
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.classList.contains('lazy-bg') || node.hasAttribute('data-bg')) {
+            bgObserver.observe(node);
+          }
+          node.querySelectorAll('.lazy-bg, [data-bg]').forEach(el => bgObserver.observe(el));
+        }
+      }
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 }
