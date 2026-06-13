@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDownloadPortfolio();
   initLazyLoading();
   initBgLazyLoading();
+  initNativeIcons();
 });
 
 // Navbar active states & responsive drawer
@@ -300,6 +301,123 @@ function initBgLazyLoading() {
             checkAndObserve(node);
           }
           node.querySelectorAll('.lazy-bg, [data-bg]').forEach(checkAndObserve);
+        }
+      }
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Map of card names to native SVG icons (Lucide-style)
+const NAME_ICON_MAP = {
+  "Construction & Management": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0c412" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hammer"><path d="m15 5 4 4"/><path d="M21.5 2.5a2.5 2.5 0 0 0-3.5 0L10 10l-4 4v4h4l4-4 7.5-8a2.5 2.5 0 0 0 0-3.5Z"/><path d="m7 21-4.3-4.3c-.4-.4-.4-1 0-1.4l1.4-1.4c.4-.4 1-.4 1.4 0L9.8 18.2c.4.4.4 1 0 1.4L8.4 21c-.4.4-1 .4-1.4 0Z"/><path d="m14 10 3 3"/></svg>`,
+  
+  "Commercial Design": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0c412" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-building"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M16 14h.01"/></svg>`,
+  
+  "Interior Design & Construction": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0c412" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sofa"><path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M4 18v2"/><path d="M20 18v2"/><path d="M12 4v9"/></svg>`,
+  
+  "Home design & construction": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0c412" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-home"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
+  
+  "Vastu Consultation": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0c412" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-compass"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`
+};
+
+// URL-based fallback map for elements without descriptive text names (like slider arrows)
+const URL_ICON_MAP = {
+  // Card keys as fallback
+  'hZverpXkvx0VBcNmVFct': NAME_ICON_MAP["Construction & Management"],
+  'S2H55LFeD7gQiWbMZCL': NAME_ICON_MAP["Commercial Design"],
+  'vZkkLuRJkp37uvzRJHx': NAME_ICON_MAP["Interior Design & Construction"],
+  'ATELiCCX2Dk8hJ4XDcK': NAME_ICON_MAP["Home design & construction"],
+  'ZXrwLocLsxJ0jTEGNdrGu3IvLU': NAME_ICON_MAP["Vastu Consultation"],
+  
+  // Testimonial Navigation Arrows
+  '6tTbkXggWgQCAJ4DO2QE': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>`,
+  '11KSGbIZoRSg4pjdnUoi': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>`
+};
+
+// Traverse up parent elements to check if we can identify the card name
+function getCardName(img) {
+  if (!img) return null;
+  let parent = img.parentElement;
+  for (let i = 0; i < 5; i++) {
+    if (!parent) break;
+    const text = parent.textContent || "";
+    const cleanText = text.replace(/\s+/g, ' ').trim();
+    if (/Construction\s*&\s*Management/i.test(cleanText) || /Construction\s*&/i.test(cleanText)) {
+      return "Construction & Management";
+    }
+    if (/Commercial\s*Design/i.test(cleanText) || /Commercial/i.test(cleanText)) {
+      return "Commercial Design";
+    }
+    if (/Interior\s*Design/i.test(cleanText)) {
+      return "Interior Design & Construction";
+    }
+    if (/Home\s*design/i.test(cleanText) || /Home\s*Design/i.test(cleanText)) {
+      return "Home design & construction";
+    }
+    if (/Vastu\s*Consultation/i.test(cleanText) || /Vastu/i.test(cleanText)) {
+      return "Vastu Consultation";
+    }
+    parent = parent.parentElement;
+  }
+  return null;
+}
+
+// Find appropriate native SVG string for image
+function findSvgForImg(img) {
+  if (!img || !img.src) return null;
+  
+  // 1. Match by card name in parent hierarchy (robust against URL updates)
+  const cardName = getCardName(img);
+  if (cardName && NAME_ICON_MAP[cardName]) {
+    return NAME_ICON_MAP[cardName];
+  }
+  
+  // 2. Match by URL fallback keys
+  for (const [key, svgString] of Object.entries(URL_ICON_MAP)) {
+    if (img.src.includes(key)) {
+      return svgString;
+    }
+  }
+  
+  return null;
+}
+
+function initNativeIcons() {
+  const checkAndReplace = (img) => {
+    if (!img || !img.src) return;
+    const svgString = findSvgForImg(img);
+    if (svgString) {
+      // Create the SVG element from string
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(svgString, 'image/svg+xml');
+      const svg = doc.documentElement;
+      
+      // Copy critical layout attributes from img to svg
+      if (img.id) svg.id = img.id;
+      if (img.className) svg.setAttribute('class', img.className);
+      
+      const styleAttr = img.getAttribute('style');
+      if (styleAttr) {
+        svg.setAttribute('style', styleAttr);
+      }
+      
+      // Replace the img tag with our inline SVG
+      img.parentNode.replaceChild(svg, img);
+    }
+  };
+
+  // Process existing images
+  document.querySelectorAll('img').forEach(checkAndReplace);
+
+  // Watch for dynamically added images (from React hydration)
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        if (node.tagName === 'IMG') {
+          checkAndReplace(node);
+        } else if (node.querySelectorAll) {
+          node.querySelectorAll('img').forEach(checkAndReplace);
         }
       }
     }
