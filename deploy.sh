@@ -13,7 +13,7 @@ set -e
 # Dynamically detect the folder the script is running in (prevents hardcoded path errors)
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP_NAME="ri-replica"
-PORT="8081"
+PORT="8787"
 # Configure both .com and .in domains as defaults
 DOMAIN="reidiusinfra.com www.reidiusinfra.com reidiusinfra.in www.reidiusinfra.in"
 
@@ -77,7 +77,7 @@ if pm2 list | grep -q "$APP_NAME"; then
     PORT=$PORT pm2 restart "$APP_NAME"
 else
     log_info "Launching new application process with PM2..."
-    PORT=$PORT pm2 start serve_mvc.py --name "$APP_NAME" --interpreter python3
+    PORT=$PORT pm2 start serve.py --name "$APP_NAME" --interpreter python3
 fi
 
 pm2 save
