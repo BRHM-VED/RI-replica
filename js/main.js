@@ -455,6 +455,15 @@ function initVideoAudio() {
     }
     if (video) {
       unmute(video);
+      if (e.type === 'click') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (video.paused) {
+          video.play().catch(err => console.log('Play failed:', err));
+        } else {
+          video.pause();
+        }
+      }
     }
   };
 
