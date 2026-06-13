@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initCardIcons();
   initLazyLoading();
   initBgLazyLoading();
+  initVideoAudio();
+  initEstimationRedirect();
 });
 
 // Navbar active states & responsive drawer
@@ -403,4 +405,143 @@ function initBgLazyLoading() {
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Global video unmute handler to resolve Framer autoplay/react-muted bugs on user interaction
+function initVideoAudio() {
+  try {
+    const originalMutedDescriptor = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'muted');
+    if (originalMutedDescriptor) {
+      Object.defineProperty(HTMLMediaElement.prototype, 'muted', {
+        get: function() {
+          if (this._userUnmuted) return false;
+          return originalMutedDescriptor.get.call(this);
+        },
+        set: function(value) {
+          if (this._userUnmuted) {
+            originalMutedDescriptor.set.call(this, false);
+            this.removeAttribute('muted');
+            return;
+          }
+          originalMutedDescriptor.set.call(this, value);
+        },
+        configurable: true
+      });
+    }
+  } catch (e) {
+    console.warn('Failed to override HTMLMediaElement.prototype.muted:', e);
+  }
+
+  const unmute = (video) => {
+    if (!video) return;
+    video._userUnmuted = true;
+    video.muted = false;
+    video.removeAttribute('muted');
+    if (video.volume === 0 || video.volume === 0.25) {
+      video.volume = 1.0;
+    }
+  };
+
+  const handleInteraction = (e) => {
+    let video = e.target.closest('video');
+    if (!video) {
+      let current = e.target;
+      while (current && current !== document.body) {
+        video = current.querySelector('video');
+        if (video) break;
+        current = current.parentElement;
+      }
+    }
+    if (video) {
+      unmute(video);
+    }
+  };
+
+  document.addEventListener('click', handleInteraction, true);
+  document.addEventListener('touchstart', handleInteraction, { capture: true, passive: true });
+
+  setInterval(() => {
+    document.querySelectorAll('video').forEach(video => {
+      if (video._userUnmuted && (video.muted || video.hasAttribute('muted'))) {
+        unmute(video);
+      }
+    });
+  }, 1000);
+}
+
+// Redirect "Get free Estimation of your house" button to the calculator website
+function initEstimationRedirect() {
+  const targetUrl = 'https://calculator.reidiusinfra.in/';
+
+  function wire() {
+    const selectors = [
+      '[data-framer-name="Get free Estimation of your house"]',
+      '[data-framer-name="Get Free Estimation"]',
+      '.framer-1736doq',
+      '.framer-3nvv4t',
+      '.framer-sym3iz'
+    ];
+    
+    selectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(btn => {
+        if (btn._estFixed) return;
+        btn._estFixed = true;
+        btn.style.cursor = 'pointer';
+        
+        const link = btn.closest('a');
+        if (link) {
+          link.href = targetUrl;
+          link.target = '_blank';
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(targetUrl, '_blank');
+          });
+        } else {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(targetUrl, '_blank');
+          });
+        }
+      });
+    });
+
+    document.querySelectorAll('button, a, [role="button"], p, span, div').forEach(el => {
+      if (el._estFixed) return;
+      
+      const text = el.textContent ? el.textContent.trim().toLowerCase() : '';
+      if (
+        text === 'get free estimation of your house' || 
+        text === 'get free estimation' ||
+        text === 'calculate cost now'
+      ) {
+        el._estFixed = true;
+        el.style.cursor = 'pointer';
+        
+        const link = el.closest('a');
+        if (link) {
+          link.href = targetUrl;
+          link.target = '_blank';
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(targetUrl, '_blank');
+          });
+        } else {
+          el.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.open(targetUrl, '_blank');
+          });
+        }
+      }
+    });
+  }
+
+  wire();
+  
+  const observer = new MutationObserver(wire);
+  observer.observe(document.body, { childList: true, subtree: true });
+  setTimeout(() => observer.disconnect(), 10000);
 }
