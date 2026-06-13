@@ -7,9 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initCursorGlow();
   initTestimonials();
   initDownloadPortfolio();
+  initCardIcons();
   initLazyLoading();
   initBgLazyLoading();
-  initNativeIcons();
 });
 
 // Navbar active states & responsive drawer
@@ -161,9 +161,11 @@ function initTestimonials() {
 // Fix Download Portfolio button (Framer hides the <a> overlay with opacity:0
 // and relies on React hydration, which breaks in offline/static mode)
 function initDownloadPortfolio() {
-  // Use the renamed, human-readable PDF path directly.
-  // Hardcoded so it works regardless of what Framer's hydration does to the DOM.
-  const pdfUrl = 'assets/ReidiusInfra_Portfoliio.pdf';
+  // Resolve PDF path dynamically based on path depth (to support subdirectories like /blog/)
+  const pathParts = window.location.pathname.split('/');
+  const depth = pathParts.length - 2;
+  const prefix = depth > 0 ? '../'.repeat(depth) : '';
+  const pdfUrl = prefix + 'assets/ReidiusInfra_Portfoliio.pdf';
 
   function triggerDownload() {
     const a = document.createElement('a');
@@ -176,20 +178,36 @@ function initDownloadPortfolio() {
   }
 
   function wire() {
-    const hiddenContainers = document.querySelectorAll('.framer-86meoo-container');
-    hiddenContainers.forEach((container) => {
-      if (container._dpFixed) return;
-      container._dpFixed = true;
-
-      const parent = container.parentElement;
-      if (!parent) return;
-
-      parent.style.cursor = 'pointer';
-      parent.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        triggerDownload();
+    // 1. Selector fallback targeting Framer classes
+    const selectors = ['.framer-86meoo-container', '.framer-1d4usz9', '.framer-i0pmw1'];
+    selectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(btn => {
+        if (btn._dpFixed) return;
+        btn._dpFixed = true;
+        
+        btn.style.cursor = 'pointer';
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerDownload();
+        });
       });
+    });
+
+    // 2. Keyword/Content search fallback
+    document.querySelectorAll('button, a, [role="button"]').forEach(btn => {
+      if (btn._dpFixed) return;
+      
+      const text = btn.textContent ? btn.textContent.toLowerCase().replace(/\s+/g, '') : '';
+      if (text.indexOf('download') !== -1) {
+        btn._dpFixed = true;
+        btn.style.cursor = 'pointer';
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerDownload();
+        });
+      }
     });
   }
 
@@ -201,6 +219,85 @@ function initDownloadPortfolio() {
   observer.observe(document.body, { childList: true, subtree: true });
   // Stop observing after 10s (hydration is always done by then)
   setTimeout(() => observer.disconnect(), 10000);
+}
+
+// Dynamically replace broken service card icons with inline base64 SVGs
+function initCardIcons() {
+  const sofaSvg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzFiMWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjAgOVY2YTIgMiAwIDAgMC0yLTJINmEyIDIgMCAwIDAtMiAydjMiLz48cGF0aCBkPSJNMiAxNmEyIDIgMCAwIDAgMiAyaDE2YTIgMiAwIDAgMCAyLTJ2LTVhMiAyIDAgMCAwLTItMkg0YTIgMiAwIDAgMC0yIDJaIi8+PHBhdGggZD0iTTQgMTh2MiIvPjxwYXRoIGQ9Ik0yMCAxOHYyIi8+PHBhdGggZD0iTTEyIDR2OSIvPjwvc3ZnPg==';
+  const houseSvg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzFiMWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJtMyA5IDktNyA5IDd2MTFhMiAyIDAgMCAxLTIgMkg1YTIgMiAwIDAgMS0yLTJ6Ii8+PHBvbHlsaW5lIHBvaW50cz0iOSAyMiA5IDEyIDE1IDEyIDE1IDIyIi8+PC9zdmc+';
+  const hammerSvg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzFiMWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJtMTUgMTUtOC41IDguNWEyLjEyIDIuMTIgMCAxIDEtMy0zTDEyIDkiLz48cGF0aCBkPSJNMTcuNjQgMTUgMjIgMTAuNjQiLz48cGF0aCBkPSJtMjAuOTEgMTEuNy0xLjI1LTEuMjVhNCA0IDAgMSAxIDUuNjYtNS42NmwxLjI1IDEuMjVhMiAyIDAgMCAxIDAgMi44M2wtMi44MyAyLjgzYTIgMiAwIDAgMS0yLjgzIDBaIi8+PHBhdGggZD0ibTE0IDEzIDUgNSIvPjwvc3ZnPg==';
+  const buildingSvg = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMxYzFiMWYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMiAyMmgyMCIvPjxwYXRoIGQ9Ik0yMCAyMlY0YTIgMiAwIDAgMC0yLTJINmEyIDIgMCAwIDAtMiAydjE4Ii8+PHBhdGggZD0iTTkgMjJWMTZoNnY2Ii8+PHBhdGggZD0iTTggNmgyIi8+PHBhdGggZD0iTTE0IDZoMiIvPjxwYXRoIGQ9Ik04IDEwaDIiLz48cGF0aCBkPSJNMTQgMTBoMiIvPjxwYXRoIGQ9Ik0gOCAxNGgyIi8+PHBhdGggZD0iTTE0IDE0aDIiLz48L3N2Zz4=';
+
+  const fileMap = {
+    'vZkkLuRJkp37uvzRJHx9MCXQU': sofaSvg,
+    'ATELiCCX2Dk8hJ4XDcKfq9fT4c': houseSvg,
+    'hZverpXkvx0VBcNmVFct8kD1COU': hammerSvg,
+    'S2H55LFeD7gQiWbMZCLCBSC2U': buildingSvg
+  };
+
+  const textKeywords = [
+    { keywords: ['interior design'], svg: sofaSvg },
+    { keywords: ['home design', 'residence'], svg: houseSvg },
+    { keywords: ['construction &', 'construction and'], svg: hammerSvg },
+    { keywords: ['commercial'], svg: buildingSvg }
+  ];
+
+  function replaceIcon(img, svgData) {
+    if (img.src !== svgData) {
+      img.src = svgData;
+      img.style.filter = 'none';
+      img.style.webkitFilter = 'none';
+      img.style.opacity = '1';
+      img.style.objectFit = 'contain';
+    }
+  }
+
+  function checkAndReplace() {
+    const images = document.querySelectorAll('img');
+    images.forEach(img => {
+      const src = img.src || '';
+      
+      // 1. Match by specific deleted Firebase filenames
+      for (const [filename, svgData] of Object.entries(fileMap)) {
+        if (src.indexOf(filename) !== -1) {
+          replaceIcon(img, svgData);
+          return;
+        }
+      }
+
+      // 2. Fallback: match by card text content in parent containers
+      let parent = img.parentElement;
+      let depth = 0;
+      while (parent && depth < 4) {
+        const text = parent.textContent ? parent.textContent.toLowerCase() : '';
+        if (text) {
+          for (const item of textKeywords) {
+            const matchesKeyword = item.keywords.some(kw => text.indexOf(kw) !== -1);
+            if (matchesKeyword) {
+              const isSmall = img.naturalWidth < 100 || img.naturalHeight < 100 || 
+                              (img.style.width && parseInt(img.style.width) < 100) ||
+                              (img.offsetWidth && img.offsetWidth < 100) ||
+                              src.endsWith('.svg') || src.includes('.svg?');
+              
+              if (isSmall && !src.includes('.webp') && !src.includes('.jpg') && !src.includes('.png')) {
+                replaceIcon(img, item.svg);
+                return;
+              }
+            }
+          }
+        }
+        parent = parent.parentElement;
+        depth++;
+      }
+    });
+  }
+
+  // Run immediately
+  checkAndReplace();
+
+  // Run on layout shifts / lazy loading / dynamic rendering
+  const observer = new MutationObserver(checkAndReplace);
+  observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
 }
 
 // Global lazy-loader for dynamically injected image tags
@@ -301,123 +398,6 @@ function initBgLazyLoading() {
             checkAndObserve(node);
           }
           node.querySelectorAll('.lazy-bg, [data-bg]').forEach(checkAndObserve);
-        }
-      }
-    }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
-}
-
-// Map of card names to native SVG icons (Lucide-style)
-const NAME_ICON_MAP = {
-  "Construction & Management": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0c412" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-hammer"><path d="m15 5 4 4"/><path d="M21.5 2.5a2.5 2.5 0 0 0-3.5 0L10 10l-4 4v4h4l4-4 7.5-8a2.5 2.5 0 0 0 0-3.5Z"/><path d="m7 21-4.3-4.3c-.4-.4-.4-1 0-1.4l1.4-1.4c.4-.4 1-.4 1.4 0L9.8 18.2c.4.4.4 1 0 1.4L8.4 21c-.4.4-1 .4-1.4 0Z"/><path d="m14 10 3 3"/></svg>`,
-  
-  "Commercial Design": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0c412" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-building"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M8 10h.01"/><path d="M16 10h.01"/><path d="M8 14h.01"/><path d="M16 14h.01"/></svg>`,
-  
-  "Interior Design & Construction": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0c412" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sofa"><path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><path d="M2 16a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M4 18v2"/><path d="M20 18v2"/><path d="M12 4v9"/></svg>`,
-  
-  "Home design & construction": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0c412" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-home"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>`,
-  
-  "Vastu Consultation": `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d0c412" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-compass"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>`
-};
-
-// URL-based fallback map for elements without descriptive text names (like slider arrows)
-const URL_ICON_MAP = {
-  // Card keys as fallback
-  'hZverpXkvx0VBcNmVFct': NAME_ICON_MAP["Construction & Management"],
-  'S2H55LFeD7gQiWbMZCL': NAME_ICON_MAP["Commercial Design"],
-  'vZkkLuRJkp37uvzRJHx': NAME_ICON_MAP["Interior Design & Construction"],
-  'ATELiCCX2Dk8hJ4XDcK': NAME_ICON_MAP["Home design & construction"],
-  'ZXrwLocLsxJ0jTEGNdrGu3IvLU': NAME_ICON_MAP["Vastu Consultation"],
-  
-  // Testimonial Navigation Arrows
-  '6tTbkXggWgQCAJ4DO2QE': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left"><path d="m15 18-6-6 6-6"/></svg>`,
-  '11KSGbIZoRSg4pjdnUoi': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right"><path d="m9 18 6-6-6-6"/></svg>`
-};
-
-// Traverse up parent elements to check if we can identify the card name
-function getCardName(img) {
-  if (!img) return null;
-  let parent = img.parentElement;
-  for (let i = 0; i < 5; i++) {
-    if (!parent) break;
-    const text = parent.textContent || "";
-    const cleanText = text.replace(/\s+/g, ' ').trim();
-    if (/Construction\s*&\s*Management/i.test(cleanText) || /Construction\s*&/i.test(cleanText)) {
-      return "Construction & Management";
-    }
-    if (/Commercial\s*Design/i.test(cleanText) || /Commercial/i.test(cleanText)) {
-      return "Commercial Design";
-    }
-    if (/Interior\s*Design/i.test(cleanText)) {
-      return "Interior Design & Construction";
-    }
-    if (/Home\s*design/i.test(cleanText) || /Home\s*Design/i.test(cleanText)) {
-      return "Home design & construction";
-    }
-    if (/Vastu\s*Consultation/i.test(cleanText) || /Vastu/i.test(cleanText)) {
-      return "Vastu Consultation";
-    }
-    parent = parent.parentElement;
-  }
-  return null;
-}
-
-// Find appropriate native SVG string for image
-function findSvgForImg(img) {
-  if (!img || !img.src) return null;
-  
-  // 1. Match by card name in parent hierarchy (robust against URL updates)
-  const cardName = getCardName(img);
-  if (cardName && NAME_ICON_MAP[cardName]) {
-    return NAME_ICON_MAP[cardName];
-  }
-  
-  // 2. Match by URL fallback keys
-  for (const [key, svgString] of Object.entries(URL_ICON_MAP)) {
-    if (img.src.includes(key)) {
-      return svgString;
-    }
-  }
-  
-  return null;
-}
-
-function initNativeIcons() {
-  const checkAndReplace = (img) => {
-    if (!img || !img.src) return;
-    const svgString = findSvgForImg(img);
-    if (svgString) {
-      // Create the SVG element from string
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(svgString, 'image/svg+xml');
-      const svg = doc.documentElement;
-      
-      // Copy critical layout attributes from img to svg
-      if (img.id) svg.id = img.id;
-      if (img.className) svg.setAttribute('class', img.className);
-      
-      const styleAttr = img.getAttribute('style');
-      if (styleAttr) {
-        svg.setAttribute('style', styleAttr);
-      }
-      
-      // Replace the img tag with our inline SVG
-      img.parentNode.replaceChild(svg, img);
-    }
-  };
-
-  // Process existing images
-  document.querySelectorAll('img').forEach(checkAndReplace);
-
-  // Watch for dynamically added images (from React hydration)
-  const observer = new MutationObserver((mutations) => {
-    for (const mutation of mutations) {
-      for (const node of mutation.addedNodes) {
-        if (node.tagName === 'IMG') {
-          checkAndReplace(node);
-        } else if (node.querySelectorAll) {
-          node.querySelectorAll('img').forEach(checkAndReplace);
         }
       }
     }
