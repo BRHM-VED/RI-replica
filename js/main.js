@@ -447,10 +447,17 @@ function initVideoAudio() {
     let video = e.target.closest('video');
     if (!video) {
       let current = e.target;
-      while (current && current !== document.body) {
-        video = current.querySelector('video');
-        if (video) break;
+      let depth = 0;
+      while (current && current !== document.body && depth < 4) {
+        const videos = current.querySelectorAll('video');
+        if (videos.length === 1) {
+          video = videos[0];
+          break;
+        } else if (videos.length > 1) {
+          break;
+        }
         current = current.parentElement;
+        depth++;
       }
     }
     if (video) {
