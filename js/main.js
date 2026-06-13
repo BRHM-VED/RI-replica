@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBgLazyLoading();
   initVideoAudio();
   initEstimationRedirect();
+  initAddressPatch();
 });
 
 // Navbar active states & responsive drawer
@@ -544,4 +545,83 @@ function initEstimationRedirect() {
   const observer = new MutationObserver(wire);
   observer.observe(document.body, { childList: true, subtree: true });
   setTimeout(() => observer.disconnect(), 10000);
+}
+
+// Dynamically patch all instances of the old office address with the new office address
+function initAddressPatch() {
+  const newAddress = "6D Engineer's Colony, D-64, New Sanganer Rd, Manyawas, Mohru Nagar, Mansarovar, Jaipur, Rajasthan 302020";
+  const newGmapUrl = "https://www.google.com/maps/place/Reidius+Infra+Construction+Company+In+Jaipur/@26.8715354,75.7322332,17z/data=!3m1!4b1!4m6!3m5!1s0x396db59f5d222b19:0x4d8a65a331b42fed!8m2!3d26.8715354!4d75.7348081!16s%2Fg%2F11sbv8bc22";
+  const oldAddrParts = ["Nand Vihar", "68 A", "Vaishali Nagar", "Amarpali Marg", "Amrapali Marg"];
+
+  function patch() {
+    // 1. Walk text nodes and replace old address
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    let node;
+    while (node = walker.nextNode()) {
+      const txt = node.nodeValue || '';
+      if (oldAddrParts.some(part => txt.indexOf(part) !== -1)) {
+        if (txt.indexOf("Reidius Infra Pvt. Ltd.") !== -1) {
+          node.nodeValue = "Reidius Infra Pvt. Ltd., " + newAddress;
+        } else if (txt.trim().length > 10) {
+          node.nodeValue = newAddress;
+        }
+      }
+    }
+
+    // 2. Patch Google Maps links
+    document.querySelectorAll('a[href*="maps.google"], a[href*="goo.gl/maps"], a[href*="maps.app.goo"], a[href*="google.com/maps"]').forEach(a => {
+      if (a.href !== newGmapUrl) {
+        a.href = newGmapUrl;
+        a.target = "_blank";
+      }
+    });
+
+    // 3. Patch Gmap / Open in buttons
+    document.querySelectorAll('a, button, [role="button"]').forEach(el => {
+      const text = el.textContent ? el.textContent.trim().toLowerCase() : '';
+      if (text.indexOf('gmap') !== -1 || text.indexOf('open in') !== -1) {
+        if (el.tagName === 'A') {
+          el.href = newGmapUrl;
+          el.target = "_blank";
+        }
+      }
+    });
+
+    // 4. Intercept the Copy Address component and force it to copy the new address
+    document.querySelectorAll('button, a, [role="button"], div').forEach(el => {
+      const labelAttr = el.getAttribute('label') || '';
+      const text = el.textContent ? el.textContent.trim() : '';
+      const dataName = el.getAttribute('data-framer-name') || '';
+      
+      if (
+        text.toLowerCase() === 'copy address' || 
+        labelAttr.toLowerCase() === 'copy address' || 
+        dataName.toLowerCase() === 'copy address' ||
+        (el.className && el.className.indexOf('copy-address') !== -1)
+      ) {
+        if (!el._copyAddrIntercepted) {
+          el._copyAddrIntercepted = true;
+          el.style.cursor = 'pointer';
+          el.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigator.clipboard.writeText("Reidius Infra Pvt. Ltd., " + newAddress)
+              .then(() => {
+                let targetTextEl = el.querySelector('p, span') || el;
+                const originalText = targetTextEl.textContent;
+                targetTextEl.textContent = 'Copied!';
+                setTimeout(() => { targetTextEl.textContent = originalText; }, 2000);
+              })
+              .catch(err => {
+                console.error('Failed to copy new address:', err);
+              });
+          }, true);
+        }
+      }
+    });
+  }
+
+  patch();
+  const observer = new MutationObserver(patch);
+  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 }
