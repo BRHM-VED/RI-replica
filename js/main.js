@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initVideoAudio();
   initEstimationRedirect();
   initAddressPatch();
+  initOfficeHoursPatch();
 });
 
 // Navbar active states & responsive drawer
@@ -641,3 +642,35 @@ function initAddressPatch() {
   const observer = new MutationObserver(patch);
   observer.observe(document.body, { childList: true, subtree: true, characterData: true });
 }
+
+// Dynamically patch Sunday office hours from "Closed" to the same timing as other days
+function initOfficeHoursPatch() {
+  function patch() {
+    // 1. Walk text nodes and replace "Closed" with "10:30 am - 7:00 pm"
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+    let node;
+    while (node = walker.nextNode()) {
+      const txt = node.nodeValue || '';
+      if (txt.trim() === 'Closed') {
+        node.nodeValue = '10:30 am - 7:00 pm';
+        if (node.parentElement) {
+          node.parentElement.style.color = 'rgb(208, 208, 208)';
+          node.parentElement.style.setProperty('--framer-text-color', 'rgb(208, 208, 208)');
+        }
+      }
+    }
+
+    // 2. Also patch data-framer-name attributes if they are "Closed"
+    document.querySelectorAll('[data-framer-name="Closed"]').forEach(el => {
+      el.setAttribute('data-framer-name', '10:30 am - 7:00 pm');
+      if (el.textContent && el.textContent.trim() === 'Closed') {
+        el.textContent = '10:30 am - 7:00 pm';
+      }
+    });
+  }
+
+  patch();
+  const observer = new MutationObserver(patch);
+  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+
