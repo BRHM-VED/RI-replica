@@ -82,6 +82,30 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return os.path.join(THIS_DIR, rel)
 
     def do_GET(self):
+        # --- Firebase Storage Proxy ---
+        if self.path.startswith('/firebase-storage/'):
+            import urllib.request
+            firebase_url = "https://firebasestorage.googleapis.com/v0/b/ri-website-c476b.firebasestorage.app" + self.path[len('/firebase-storage'):]
+            try:
+                req = urllib.request.Request(
+                    firebase_url,
+                    headers={'User-Agent': 'Mozilla/5.0'}
+                )
+                with urllib.request.urlopen(req) as response:
+                    data = response.read()
+                    self.send_response(200)
+                    ctype = response.headers.get('Content-Type', 'application/octet-stream')
+                    self.send_header('Content-Type', ctype)
+                    self.send_header('Content-Length', str(len(data)))
+                    self.send_header('Access-Control-Allow-Origin', '*')
+                    self.send_header('Cache-Control', 'public, max-age=31536000, immutable')
+                    self.end_headers()
+                    self.wfile.write(data)
+                    return
+            except Exception as e:
+                self.send_error(500, f"Firebase proxy error: {str(e)}")
+                return
+
         path = self.translate_path(self.path)
 
         # --- 404 check ---

@@ -118,6 +118,17 @@ server {
     proxy_set_header Range \$http_range;
     proxy_set_header If-Range \$http_if_range;
 
+    location /firebase-storage/ {
+        proxy_pass https://firebasestorage.googleapis.com/v0/b/ri-website-c476b.firebasestorage.app/;
+        proxy_set_header Host firebasestorage.googleapis.com;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+
+        # Cache control for Cloudflare CDN to cache images aggressively
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
     location / {
         proxy_pass http://127.0.0.1:$PORT;
         proxy_http_version 1.1;

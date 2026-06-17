@@ -169,7 +169,7 @@ function initDownloadPortfolio() {
   const pathParts = window.location.pathname.split('/');
   const depth = pathParts.length - 2;
   const prefix = depth > 0 ? '../'.repeat(depth) : '';
-  const pdfUrl = prefix + 'assets/ReidiusInfra_Portfoliio.pdf';
+  const pdfUrl = prefix + 'assets/ReidiusInfra_Portfoliio.pdf?v=' + Date.now();
 
   function triggerDownload() {
     const a = document.createElement('a');
