@@ -144,9 +144,7 @@ server {
 EOF
 
     # Enable the site configuration
-    if [ ! -L "$NGINX_LINK" ]; then
-        ln -s "$NGINX_CONF" "$NGINX_LINK"
-    fi
+    ln -sf "$NGINX_CONF" "$NGINX_LINK"
 
     log_info "Testing Nginx syntax..."
     nginx -t
