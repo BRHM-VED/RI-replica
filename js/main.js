@@ -198,12 +198,13 @@ function initDownloadPortfolio() {
       });
     });
 
-    // 2. Keyword/Content search fallback
-    document.querySelectorAll('button, a, [role="button"]').forEach(btn => {
+    // 2. Keyword/Content search fallback (expanded to div/span for mobile support)
+    document.querySelectorAll('button, a, div, span, [role="button"]').forEach(btn => {
       if (btn._dpFixed) return;
       
       const text = btn.textContent ? btn.textContent.toLowerCase().replace(/\s+/g, '') : '';
-      if (text.indexOf('download') !== -1) {
+      // Ensure the text is short (< 30 chars) to prevent attaching to large page containers
+      if (text.length < 30 && (text.indexOf('download') !== -1 || text === 'portfolio')) {
         btn._dpFixed = true;
         btn.style.cursor = 'pointer';
         btn.addEventListener('click', (e) => {
