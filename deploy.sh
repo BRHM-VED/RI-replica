@@ -167,16 +167,26 @@ fi
 # --- Step 5: Certbot SSL Setup Reminder ---
 log_info "Checking SSL Certificate status..."
 
-# Build certbot command dynamically
+# Build certbot command dynamically, only including domains that are active and pointed to this VPS
 CERTBOT_ARGS=""
 for d in $DOMAIN; do
-    CERTBOT_ARGS="$CERTBOT_ARGS -d $d"
+    log_info "Verifying if $d is pointed to this server..."
+    if curl -s -I --connect-timeout 3 "http://$d" | grep -q -i "Server: nginx"; then
+        log_success "$d is pointed to this server. Adding to SSL certificate."
+        CERTBOT_ARGS="$CERTBOT_ARGS -d $d"
+    else
+        log_warning "$d is NOT pointed to this server. Skipping SSL configuration for it."
+    fi
 done
 
 if command -v certbot &> /dev/null; then
-    log_info "Certbot is installed. Automatically running Certbot to secure domains with HTTPS..."
-    # Run Certbot non-interactively to configure/re-deploy Nginx SSL block
-    certbot --nginx $CERTBOT_ARGS --non-interactive --agree-tos --expand --cert-name reidiusinfra.in --email tech@magicmomd.com || log_warning "Certbot SSL auto-configuration failed. You may need to run: sudo certbot --nginx$CERTBOT_ARGS"
+    if [ -n "$CERTBOT_ARGS" ]; then
+        log_info "Certbot is installed. Automatically running Certbot to secure active domains with HTTPS..."
+        # Run Certbot non-interactively to configure/re-deploy Nginx SSL block for active domains
+        certbot --nginx $CERTBOT_ARGS --non-interactive --agree-tos --expand --cert-name reidiusinfra.in --email tech@magicmomd.com || log_warning "Certbot SSL auto-configuration failed."
+    else
+        log_warning "No active domains are currently pointing to this VPS. Skipping Certbot run."
+    fi
 else
     log_warning "Certbot is not installed. To secure your site with HTTPS, run:"
     echo -e "${YELLOW}apt-get install -y certbot python3-certbot-nginx${NC}"
