@@ -83,9 +83,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         # --- Firebase Storage Proxy ---
-        if self.path.startswith('/firebase-storage/'):
+        if self.path.startswith('/v0/b/ri-website-c476b.firebasestorage.app/'):
             import urllib.request
-            firebase_url = "https://firebasestorage.googleapis.com/v0/b/ri-website-c476b.firebasestorage.app" + self.path[len('/firebase-storage'):]
+            firebase_url = "https://firebasestorage.googleapis.com" + self.path
             try:
                 req = urllib.request.Request(
                     firebase_url,
