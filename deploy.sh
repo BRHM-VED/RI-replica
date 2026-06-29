@@ -119,15 +119,15 @@ server {
     proxy_set_header If-Range \$http_if_range;
 
     location /firebase-storage/ {
-        # Extract raw suffix from \$request_uri to preserve %2F encoding
-        if (\$request_uri ~* "^/firebase-storage/(.*)$") {
-            set \$raw_suffix \$1;
+        # Extract raw path (excluding query string) from \$request_uri to preserve %2F encoding
+        if (\$request_uri ~* "^/firebase-storage/([^?]*)") {
+            set \$raw_path \$1;
         }
 
         resolver 8.8.8.8 8.8.4.4 valid=300s;
         resolver_timeout 5s;
 
-        proxy_pass https://firebasestorage.googleapis.com/v0/b/ri-website-c476b.firebasestorage.app/\$raw_suffix;
+        proxy_pass https://firebasestorage.googleapis.com/v0/b/ri-website-c476b.firebasestorage.app/\$raw_path\$is_args\$args;
         proxy_set_header Host firebasestorage.googleapis.com;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -174,8 +174,9 @@ for d in $DOMAIN; do
 done
 
 if command -v certbot &> /dev/null; then
-    log_success "Certbot is installed. To enable HTTPS, run:"
-    echo -e "${GREEN}sudo certbot --nginx$CERTBOT_ARGS${NC}"
+    log_info "Certbot is installed. Automatically running Certbot to secure domains with HTTPS..."
+    # Run Certbot non-interactively to configure/re-deploy Nginx SSL block
+    certbot --nginx $CERTBOT_ARGS --non-interactive --agree-tos --email tech@magicmomd.com || log_warning "Certbot SSL auto-configuration failed. You may need to run: sudo certbot --nginx$CERTBOT_ARGS"
 else
     log_warning "Certbot is not installed. To secure your site with HTTPS, run:"
     echo -e "${YELLOW}apt-get install -y certbot python3-certbot-nginx${NC}"
