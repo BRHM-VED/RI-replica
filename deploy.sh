@@ -119,7 +119,15 @@ server {
     proxy_set_header If-Range \$http_if_range;
 
     location /firebase-storage/ {
-        proxy_pass https://firebasestorage.googleapis.com/v0/b/ri-website-c476b.firebasestorage.app/;
+        # Extract raw suffix from \$request_uri to preserve %2F encoding
+        if (\$request_uri ~* "^/firebase-storage/(.*)$") {
+            set \$raw_suffix \$1;
+        }
+
+        resolver 8.8.8.8 8.8.4.4 valid=300s;
+        resolver_timeout 5s;
+
+        proxy_pass https://firebasestorage.googleapis.com/v0/b/ri-website-c476b.firebasestorage.app/\$raw_suffix;
         proxy_set_header Host firebasestorage.googleapis.com;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
