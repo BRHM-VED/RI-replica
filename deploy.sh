@@ -176,7 +176,7 @@ done
 if command -v certbot &> /dev/null; then
     log_info "Certbot is installed. Automatically running Certbot to secure domains with HTTPS..."
     # Run Certbot non-interactively to configure/re-deploy Nginx SSL block
-    certbot --nginx $CERTBOT_ARGS --non-interactive --agree-tos --expand --email tech@magicmomd.com || log_warning "Certbot SSL auto-configuration failed. You may need to run: sudo certbot --nginx$CERTBOT_ARGS"
+    certbot --nginx $CERTBOT_ARGS --non-interactive --agree-tos --expand --cert-name reidiusinfra.in --email tech@magicmomd.com || log_warning "Certbot SSL auto-configuration failed. You may need to run: sudo certbot --nginx$CERTBOT_ARGS"
 else
     log_warning "Certbot is not installed. To secure your site with HTTPS, run:"
     echo -e "${YELLOW}apt-get install -y certbot python3-certbot-nginx${NC}"
