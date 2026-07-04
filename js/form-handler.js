@@ -85,9 +85,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         readyToRelocate: getValue('[name*="relocate" i], [placeholder*="relocate" i]')
                     };
                 } else {
+                    const rawPhone = getValue('[name*="phone" i], [name*="contact" i], [placeholder*="phone" i], [placeholder*="contact" i], #phone, [name*="mobile" i], [placeholder*="mobile" i]');
+                    const digits = rawPhone.replace(/\D/g, "");
+                    const phoneNumber = (digits.length === 12 && digits.startsWith("91")) ? digits.substring(2) : (digits.length > 10 ? digits.slice(-10) : digits);
+
                     payload = {
                         name: getValue('[name*="name" i], [placeholder*="name" i], #name'),
-                        phoneNumber: getValue('[name*="phone" i], [name*="contact" i], [placeholder*="phone" i], [placeholder*="contact" i], #phone'),
+                        phoneNumber: phoneNumber,
                         email: getValue('[name*="email" i], [placeholder*="email" i], #email'),
                         message: getValue('[name*="message" i], [placeholder*="message" i], #message, [name*="enquiry" i], [placeholder*="enquiry" i]')
                     };
