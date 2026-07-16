@@ -176,30 +176,16 @@ function initDownloadPortfolio() {
   const pdfUrl = prefix + 'assets/ReidiusInfra_Portfoliio.pdf?v=' + Date.now();
 
   function triggerDownload() {
-    // Force download on both desktop and mobile using Blob URL
-    fetch(pdfUrl, { cache: 'no-store' })
-      .then(response => response.blob())
-      .then(blob => {
-        const blobUrl = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = 'ReidiusInfra_Portfoliio.pdf';
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(blobUrl);
-        }, 100);
-      })
-      .catch(() => {
-        // Fallback if fetch fails
-        const a = document.createElement('a');
-        a.href = pdfUrl;
-        a.download = 'ReidiusInfra_Portfoliio.pdf';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      });
+    // Use a direct synchronous anchor click so the download stays within the
+    // user-gesture window (required by iOS Safari). The server sends
+    // Content-Disposition: attachment for .pdf files, so no fetch/blob needed.
+    const a = document.createElement('a');
+    a.href = pdfUrl;
+    a.download = 'ReidiusInfra_Portfoliio.pdf';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   }
 
   // Combined capture-phase listener for delegated portfolio downloads and reliable navigation
