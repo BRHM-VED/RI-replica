@@ -215,7 +215,7 @@ function initDownloadPortfolio() {
     let target = e.target;
     let loopDepth = 0;
     // Limit parent traversal to 4 levels to prevent bubbling up to header container variants named "Portfolio"
-    while (target && target !== document.body && loopDepth < 4) {
+    while (target && target !== document.body && loopDepth < 8) {
       if (target.nodeType === 1) { // Ensure it is an Element node
         const framerName = target.getAttribute('data-framer-name');
         const isSelectorMatch = typeof target.matches === 'function' && (

@@ -145,6 +145,12 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         else:
             self.send_header('Cache-Control', 'public, max-age=31536000, immutable')
 
+        # Force download for PDF files (prevents browser from opening inline)
+        if path.endswith('.pdf'):
+            import os as _os
+            filename = _os.path.basename(path)
+            self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
+
         if use_gzip:
             self.send_header('Content-Encoding', 'gzip')
 
