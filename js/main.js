@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initTopBarPatch();
   initEmployeePatch();
   initProjectPatch();
+  initImagePreloader();
 });
 
 // Navbar active states & responsive drawer
@@ -178,8 +179,7 @@ function initDownloadPortfolio() {
     const isMobile = window.innerWidth < 810 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     
     if (isMobile) {
-      // On mobile: force download only (using Blob URL to prevent opening inline and leaving the page)
-      fetch(pdfUrl)
+      fetch(pdfUrl, { cache: 'no-store' })
         .then(response => response.blob())
         .then(blob => {
           const blobUrl = URL.createObjectURL(blob);
@@ -808,6 +808,49 @@ function initProjectPatch() {
 
   patch();
   const observer = new MutationObserver(patch);
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Preloader to eager-fetch and cache all images in the background on startup
+function initImagePreloader() {
+  const preloadedUrls = new Set();
+  
+  const preloadImg = (src) => {
+    if (!src || preloadedUrls.has(src)) return;
+    preloadedUrls.add(src);
+    const tempImg = new Image();
+    tempImg.src = src;
+  };
+
+  const scanAndPreload = () => {
+    // 1. Scan image tags
+    document.querySelectorAll('img').forEach(img => {
+      const src = img.getAttribute('src');
+      if (src) preloadImg(src);
+      
+      const srcset = img.getAttribute('srcset');
+      if (srcset) {
+        srcset.split(',').forEach(part => {
+          const url = part.trim().split(/\s+/)[0];
+          if (url) preloadImg(url);
+        });
+      }
+    });
+
+    // 2. Scan elements with custom data-bg or style backgrounds
+    document.querySelectorAll('[data-bg]').forEach(el => {
+      const bg = el.getAttribute('data-bg');
+      if (bg) preloadImg(bg);
+    });
+  };
+
+  // Run initial scan
+  scanAndPreload();
+
+  // Watch for any dynamically added content and prefetch new images immediately
+  const observer = new MutationObserver((mutations) => {
+    scanAndPreload();
+  });
   observer.observe(document.body, { childList: true, subtree: true });
 }
 
