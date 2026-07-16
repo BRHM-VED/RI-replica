@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initEstimationRedirect();
   initAddressPatch();
   initOfficeHoursPatch();
+  initTopBarPatch();
 });
 
 // Navbar active states & responsive drawer
@@ -673,5 +674,38 @@ function initOfficeHoursPatch() {
   patch();
   const observer = new MutationObserver(patch);
   observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+
+// Dynamically patch the mobile scrolling top-bar ticker to show only fixed Contact details
+function initTopBarPatch() {
+  const targetText = 'Contact: +91 9057344344';
+
+  function patch() {
+    const containers = document.querySelectorAll('.framer-hiyc77-container');
+    containers.forEach(container => {
+      if (container._tbPatched) return;
+      container._tbPatched = true;
+
+      const fixedEl = document.createElement('div');
+      fixedEl.style.width = '100%';
+      fixedEl.style.height = '100%';
+      fixedEl.style.display = 'flex';
+      fixedEl.style.alignItems = 'center';
+      fixedEl.style.justifyContent = 'center';
+      fixedEl.style.fontFamily = '"Archivo", "Archivo Placeholder", sans-serif';
+      fixedEl.style.fontSize = '12px';
+      fixedEl.style.fontWeight = '400';
+      fixedEl.style.color = 'rgb(129, 129, 129)';
+      fixedEl.style.whiteSpace = 'nowrap';
+      fixedEl.textContent = targetText;
+
+      container.innerHTML = '';
+      container.appendChild(fixedEl);
+    });
+  }
+
+  patch();
+  const observer = new MutationObserver(patch);
+  observer.observe(document.body, { childList: true, subtree: true });
 }
 
