@@ -177,56 +177,54 @@ function initDownloadPortfolio() {
   function triggerDownload() {
     const a = document.createElement('a');
     a.href = pdfUrl;
-    // No target="_blank" — browsers ignore `download` when target is _blank
     a.download = 'ReidiusInfra_Portfoliio.pdf';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   }
 
-  function wire() {
-    // 1. Selector fallback targeting Framer classes
-    const selectors = ['.framer-86meoo-container', '.framer-1d4usz9', '.framer-i0pmw1'];
-    selectors.forEach(sel => {
-      document.querySelectorAll(sel).forEach(btn => {
-        if (btn._dpFixed) return;
-        btn._dpFixed = true;
-        
-        btn.style.cursor = 'pointer';
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          triggerDownload();
-        });
-      });
-    });
-
-    // 2. Keyword/Content search fallback (expanded to div/span for mobile support)
-    document.querySelectorAll('button, a, div, span, [role="button"]').forEach(btn => {
-      if (btn._dpFixed) return;
+  // Combined capture-phase listener for delegated portfolio downloads and reliable navigation
+  document.addEventListener('click', (e) => {
+    // 1. Delegated Portfolio Download
+    let target = e.target;
+    while (target && target !== document.body) {
+      const isSelectorMatch = target.matches && (
+        target.matches('.framer-86meoo-container') || 
+        target.matches('.framer-1d4usz9') || 
+        target.matches('.framer-i0pmw1') ||
+        target.matches('[data-framer-name*="Portfolio"]')
+      );
       
-      const text = btn.textContent ? btn.textContent.toLowerCase().replace(/\s+/g, '') : '';
-      // Ensure the text is short (< 30 chars) to prevent attaching to large page containers
-      if (text.length < 30 && (text.indexOf('download') !== -1 || text === 'portfolio')) {
-        btn._dpFixed = true;
-        btn.style.cursor = 'pointer';
-        btn.addEventListener('click', (e) => {
+      const text = target.textContent ? target.textContent.toLowerCase().replace(/\s+/g, '') : '';
+      const isKeywordMatch = text.length < 30 && (
+        text.indexOf('downloadportfolio') !== -1 || 
+        text === 'portfolio' || 
+        text === 'download'
+      );
+
+      if (isSelectorMatch || isKeywordMatch) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerDownload();
+        return;
+      }
+      target = target.parentElement;
+    }
+
+    // 2. Global Link Navigation fix (specifically inside mobile drawer or dynamic layouts to bypass Framer preventDefault)
+    const anchor = e.target.closest('a');
+    if (anchor) {
+      const href = anchor.getAttribute('href');
+      if (href) {
+        const isLocal = !/^(https?:|\/\/)/i.test(href) || href.includes(window.location.host);
+        if (isLocal && !href.startsWith('#') && !href.startsWith('tel:') && !href.startsWith('mailto:')) {
           e.preventDefault();
           e.stopPropagation();
-          triggerDownload();
-        });
+          window.location.href = href;
+        }
       }
-    });
-  }
-
-  // Run immediately (SSR HTML already has the elements)
-  wire();
-
-  // Re-run after Framer's React hydration re-renders the tree
-  const observer = new MutationObserver(wire);
-  observer.observe(document.body, { childList: true, subtree: true });
-  // Stop observing after 10s (hydration is always done by then)
-  setTimeout(() => observer.disconnect(), 10000);
+    }
+  }, true); // capture phase ensures we run before Framer's default-blocking listeners
 }
 
 // Dynamically replace broken service card icons with inline base64 SVGs
