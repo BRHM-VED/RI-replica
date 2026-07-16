@@ -175,12 +175,37 @@ function initDownloadPortfolio() {
   const pdfUrl = prefix + 'assets/ReidiusInfra_Portfoliio.pdf?v=' + Date.now();
 
   function triggerDownload() {
-    const a = document.createElement('a');
-    a.href = pdfUrl;
-    a.download = 'ReidiusInfra_Portfoliio.pdf';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const isMobile = window.innerWidth < 810 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // On mobile: force download only (using Blob URL to prevent opening inline and leaving the page)
+      fetch(pdfUrl)
+        .then(response => response.blob())
+        .then(blob => {
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = 'ReidiusInfra_Portfoliio.pdf';
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+          }, 100);
+        })
+        .catch(() => {
+          // Fallback if fetch fails
+          const a = document.createElement('a');
+          a.href = pdfUrl;
+          a.download = 'ReidiusInfra_Portfoliio.pdf';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        });
+    } else {
+      // On desktop: show/open the PDF in a new tab
+      window.open(pdfUrl, '_blank');
+    }
   }
 
   // Combined capture-phase listener for delegated portfolio downloads and reliable navigation
