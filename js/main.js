@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAddressPatch();
   initOfficeHoursPatch();
   initTopBarPatch();
+  initEmployeePatch();
 });
 
 // Navbar active states & responsive drawer
@@ -693,6 +694,75 @@ function initTopBarPatch() {
           </div>
         </div>
       `;
+    });
+  }
+
+  patch();
+  const observer = new MutationObserver(patch);
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Dynamically remove specific employee profiles from the About page
+function initEmployeePatch() {
+  const namesToRemove = [
+    "Ar. Vartika Agarwal",
+    "Kaushal Kumawat",
+    "Mukesh Kumawat",
+    "Manish Kumar Kumawat",
+    "Shlok Saini",
+    "Hemanth Kumawat",
+    "Shahid Khan",
+    "Omprakash",
+    "Tejwant Kumar",
+    "Nikita Joshi"
+  ];
+
+  function patch() {
+    const textElements = document.querySelectorAll('p, span, div');
+    textElements.forEach(el => {
+      if (el.children.length > 0) return;
+      const text = el.textContent ? el.textContent.trim() : '';
+      if (!text) return;
+
+      const matches = namesToRemove.some(name => {
+        const cleanText = text.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+        const cleanName = name.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+        return cleanText === cleanName;
+      });
+
+      if (matches) {
+        let parent = el;
+        let depth = 0;
+        let cardFound = false;
+
+        while (parent && depth < 6) {
+          parent = parent.parentElement;
+          if (!parent || parent === document.body) break;
+          
+          const framerName = parent.getAttribute('data-framer-name') || '';
+          if (
+            framerName.indexOf('Frame 328') !== -1 ||
+            framerName.indexOf('Variant') !== -1 ||
+            (parent.querySelector('img') && parent.parentElement && parent.parentElement.children.length > 2)
+          ) {
+            parent.style.display = 'none';
+            cardFound = true;
+            break;
+          }
+          depth++;
+        }
+
+        if (!cardFound && el.parentElement) {
+          let fallback = el.parentElement;
+          while (fallback && fallback.parentElement && fallback.parentElement !== document.body) {
+            if (fallback.querySelector('img')) {
+              fallback.style.display = 'none';
+              break;
+            }
+            fallback = fallback.parentElement;
+          }
+        }
+      }
     });
   }
 
