@@ -678,29 +678,21 @@ function initOfficeHoursPatch() {
 
 // Dynamically patch the mobile scrolling top-bar ticker to show only fixed Contact details
 function initTopBarPatch() {
-  const targetText = 'Contact: +91 9057344344';
-
   function patch() {
     const containers = document.querySelectorAll('.framer-hiyc77-container');
     containers.forEach(container => {
       if (container._tbPatched) return;
       container._tbPatched = true;
 
-      const fixedEl = document.createElement('div');
-      fixedEl.style.width = '100%';
-      fixedEl.style.height = '100%';
-      fixedEl.style.display = 'flex';
-      fixedEl.style.alignItems = 'center';
-      fixedEl.style.justifyContent = 'center';
-      fixedEl.style.fontFamily = '"Archivo", "Archivo Placeholder", sans-serif';
-      fixedEl.style.fontSize = '12px';
-      fixedEl.style.fontWeight = '400';
-      fixedEl.style.color = 'rgb(129, 129, 129)';
-      fixedEl.style.whiteSpace = 'nowrap';
-      fixedEl.textContent = targetText;
-
-      container.innerHTML = '';
-      container.appendChild(fixedEl);
+      container.innerHTML = `
+        <div style="width: 100%; height: 100%; position: relative;">
+          <div class="framer-vkebyu" data-framer-name="Contact: +91 9057344344" data-framer-component-type="RichTextContainer" style="--extracted-r6o4lv:rgb(129, 129, 129);--framer-paragraph-spacing:0px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);">
+            <p class="framer-text" style="--font-selector:R0Y7QXJjaGl2by1yZWd1bGFy;--framer-font-family:&quot;Archivo&quot;, &quot;Archivo Placeholder&quot;, sans-serif;--framer-font-size:12px;--framer-line-height:121%;--framer-text-color:var(--extracted-r6o4lv, rgb(129, 129, 129));white-space:nowrap;margin:0;">
+              Contact: +91 9057344344
+            </p>
+          </div>
+        </div>
+      `;
     });
   }
 
