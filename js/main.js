@@ -185,9 +185,18 @@ function initDownloadPortfolio() {
 
   // Combined capture-phase listener for delegated portfolio downloads and reliable navigation
   document.addEventListener('click', (e) => {
+    // Safety check: if clicking on or inside a menu toggle, hamburger, or close button, ignore it completely
+    if (e.target && typeof e.target.closest === 'function') {
+      if (e.target.closest('.hamburger') || e.target.closest('[data-framer-name="menu"]') || e.target.closest('[data-framer-name="close"]')) {
+        return;
+      }
+    }
+
     // 1. Delegated Portfolio Download
     let target = e.target;
-    while (target && target !== document.body) {
+    let loopDepth = 0;
+    // Limit parent traversal to 4 levels to prevent bubbling up to header container variants named "Portfolio"
+    while (target && target !== document.body && loopDepth < 4) {
       if (target.nodeType === 1) { // Ensure it is an Element node
         const framerName = target.getAttribute('data-framer-name');
         const isSelectorMatch = typeof target.matches === 'function' && (
@@ -208,6 +217,7 @@ function initDownloadPortfolio() {
           // Explicit safety guard: do not trigger download for menu toggles, close buttons, or navigation wrappers
           if (text.indexOf('menu') !== -1 || text.indexOf('close') !== -1 || target.closest('.hamburger')) {
             target = target.parentElement;
+            loopDepth++;
             continue;
           }
           e.preventDefault();
@@ -217,6 +227,7 @@ function initDownloadPortfolio() {
         }
       }
       target = target.parentElement;
+      loopDepth++;
     }
 
     // 2. Global Link Navigation fix (specifically inside mobile drawer or dynamic layouts to bypass Framer preventDefault)
