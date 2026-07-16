@@ -189,21 +189,27 @@ function initDownloadPortfolio() {
     let target = e.target;
     while (target && target !== document.body) {
       if (target.nodeType === 1) { // Ensure it is an Element node
+        const framerName = target.getAttribute('data-framer-name');
         const isSelectorMatch = typeof target.matches === 'function' && (
           target.matches('.framer-86meoo-container') || 
           target.matches('.framer-1d4usz9') || 
           target.matches('.framer-i0pmw1') ||
-          target.matches('[data-framer-name*="Portfolio"]')
+          framerName === 'Download Portfolio' ||
+          framerName === 'Portfolio'
         );
         
         const text = target.textContent ? target.textContent.toLowerCase().replace(/\s+/g, '') : '';
         const isKeywordMatch = text.length < 30 && (
           text.indexOf('downloadportfolio') !== -1 || 
-          text === 'portfolio' || 
-          text === 'download'
+          text === 'portfolio'
         );
 
         if (isSelectorMatch || isKeywordMatch) {
+          // Explicit safety guard: do not trigger download for menu toggles, close buttons, or navigation wrappers
+          if (text.indexOf('menu') !== -1 || text.indexOf('close') !== -1 || target.closest('.hamburger')) {
+            target = target.parentElement;
+            continue;
+          }
           e.preventDefault();
           e.stopPropagation();
           triggerDownload();
