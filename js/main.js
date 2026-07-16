@@ -350,36 +350,12 @@ function initCardIcons() {
   observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['src'] });
 }
 
-// Global lazy-loader for dynamically injected image tags
+// Global loader to force eager-loading for dynamically injected image tags
 function initLazyLoading() {
-  const setLazy = (img) => {
+  const setEager = (img) => {
     if (!img) return;
-
-    // Determine if the image is above-the-fold/primary
-    const isAboveFold = () => {
-      // 1. Check if inside header, hero section, or navigation
-      if (img.closest('header') || img.closest('.hero') || img.closest('[data-framer-name*="Hero" i]') || img.closest('[data-framer-name*="Navbar" i]')) {
-        return true;
-      }
-      
-      // 2. Check if it's one of the first 3 images in document order
-      const allImgs = Array.from(document.querySelectorAll('img'));
-      const index = allImgs.indexOf(img);
-      if (index >= 0 && index < 3) {
-        return true;
-      }
-      
-      return false;
-    };
-
-    if (isAboveFold()) {
-      img.setAttribute('loading', 'eager');
-      img.setAttribute('fetchpriority', 'high');
-    } else {
-      if (!img.hasAttribute('loading')) {
-        img.setAttribute('loading', 'lazy');
-      }
-    }
+    img.setAttribute('loading', 'eager');
+    img.setAttribute('fetchpriority', 'high');
   };
 
   // Watch for any images added dynamically by React/Framer
@@ -387,24 +363,23 @@ function initLazyLoading() {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (node.tagName === 'IMG') {
-          setLazy(node);
+          setEager(node);
         } else if (node.querySelectorAll) {
-          node.querySelectorAll('img').forEach(setLazy);
+          node.querySelectorAll('img').forEach(setEager);
         }
       }
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // Apply lazy loading to any images currently on the page
-  document.querySelectorAll('img').forEach(setLazy);
+  // Apply eager loading to any images currently on the page
+  document.querySelectorAll('img').forEach(setEager);
 }
 
-// Global lightweight CSS background lazy loader
+// Global loader to force immediate background image loading
 function initBgLazyLoading() {
-  const lazyBgs = document.querySelectorAll('.lazy-bg, [data-bg]');
-  
   const loadBg = (el) => {
+    if (!el) return;
     const bgUrl = el.getAttribute('data-bg');
     if (bgUrl) {
       el.style.backgroundImage = `url('${bgUrl}')`;
@@ -412,47 +387,23 @@ function initBgLazyLoading() {
     el.classList.add('bg-loaded');
   };
 
-  const bgObserver = new IntersectionObserver((entries, observer) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const el = entry.target;
-        loadBg(el);
-        observer.unobserve(el);
-      }
-    });
-  }, {
-    root: null,
-    rootMargin: '100px', // Pre-load backgrounds 100px before they enter viewport
-    threshold: 0.01
-  });
-
-  // Check if background element is above the fold
-  const checkAndObserve = (el) => {
-    const isAboveFold = el.closest('header') || el.closest('[data-framer-name*="Hero" i]') || el.closest('[data-framer-name*="Navbar" i]');
-    if (isAboveFold) {
-      loadBg(el);
-    } else {
-      bgObserver.observe(el);
-    }
-  };
-
-  // Watch for existing elements
-  lazyBgs.forEach(checkAndObserve);
-
   // Watch for any dynamically injected background elements
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       for (const node of mutation.addedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) {
           if (node.classList.contains('lazy-bg') || node.hasAttribute('data-bg')) {
-            checkAndObserve(node);
+            loadBg(node);
           }
-          node.querySelectorAll('.lazy-bg, [data-bg]').forEach(checkAndObserve);
+          node.querySelectorAll('.lazy-bg, [data-bg]').forEach(loadBg);
         }
       }
     }
   });
   observer.observe(document.body, { childList: true, subtree: true });
+
+  // Load all background elements currently on the page immediately
+  document.querySelectorAll('.lazy-bg, [data-bg]').forEach(loadBg);
 }
 
 // Global video unmute handler to resolve Framer autoplay/react-muted bugs on user interaction
