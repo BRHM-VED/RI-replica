@@ -188,31 +188,33 @@ function initDownloadPortfolio() {
     // 1. Delegated Portfolio Download
     let target = e.target;
     while (target && target !== document.body) {
-      const isSelectorMatch = target.matches && (
-        target.matches('.framer-86meoo-container') || 
-        target.matches('.framer-1d4usz9') || 
-        target.matches('.framer-i0pmw1') ||
-        target.matches('[data-framer-name*="Portfolio"]')
-      );
-      
-      const text = target.textContent ? target.textContent.toLowerCase().replace(/\s+/g, '') : '';
-      const isKeywordMatch = text.length < 30 && (
-        text.indexOf('downloadportfolio') !== -1 || 
-        text === 'portfolio' || 
-        text === 'download'
-      );
+      if (target.nodeType === 1) { // Ensure it is an Element node
+        const isSelectorMatch = typeof target.matches === 'function' && (
+          target.matches('.framer-86meoo-container') || 
+          target.matches('.framer-1d4usz9') || 
+          target.matches('.framer-i0pmw1') ||
+          target.matches('[data-framer-name*="Portfolio"]')
+        );
+        
+        const text = target.textContent ? target.textContent.toLowerCase().replace(/\s+/g, '') : '';
+        const isKeywordMatch = text.length < 30 && (
+          text.indexOf('downloadportfolio') !== -1 || 
+          text === 'portfolio' || 
+          text === 'download'
+        );
 
-      if (isSelectorMatch || isKeywordMatch) {
-        e.preventDefault();
-        e.stopPropagation();
-        triggerDownload();
-        return;
+        if (isSelectorMatch || isKeywordMatch) {
+          e.preventDefault();
+          e.stopPropagation();
+          triggerDownload();
+          return;
+        }
       }
       target = target.parentElement;
     }
 
     // 2. Global Link Navigation fix (specifically inside mobile drawer or dynamic layouts to bypass Framer preventDefault)
-    const anchor = e.target.closest('a');
+    const anchor = e.target && typeof e.target.closest === 'function' ? e.target.closest('a') : null;
     if (anchor) {
       const href = anchor.getAttribute('href');
       if (href) {
