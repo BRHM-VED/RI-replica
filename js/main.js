@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initOfficeHoursPatch();
   initTopBarPatch();
   initEmployeePatch();
+  initProjectPatch();
 });
 
 // Navbar active states & responsive drawer
@@ -761,6 +762,52 @@ function initEmployeePatch() {
             }
             fallback = fallback.parentElement;
           }
+        }
+      }
+    });
+  }
+
+  patch();
+  const observer = new MutationObserver(patch);
+  observer.observe(document.body, { childList: true, subtree: true });
+}
+
+// Dynamically remove specific projects from pages at runtime
+function initProjectPatch() {
+  const projectsToRemove = [
+    "Rajesh Kumar"
+  ];
+
+  function patch() {
+    const textElements = document.querySelectorAll('p, span, div');
+    textElements.forEach(el => {
+      if (el.children.length > 0) return;
+      const text = el.textContent ? el.textContent.trim() : '';
+      if (!text) return;
+
+      const matches = projectsToRemove.some(proj => {
+        return text.toLowerCase() === proj.toLowerCase();
+      });
+
+      if (matches) {
+        let parent = el;
+        let depth = 0;
+        let cardFound = false;
+
+        while (parent && depth < 6) {
+          parent = parent.parentElement;
+          if (!parent || parent === document.body) break;
+          
+          const classes = Array.from(parent.classList);
+          const isFramer = classes.some(c => c.startsWith('framer-'));
+          const hasImg = parent.querySelector('img') !== null;
+          
+          if (isFramer && hasImg) {
+            parent.style.display = 'none';
+            cardFound = true;
+            break;
+          }
+          depth++;
         }
       }
     });
